@@ -1,10 +1,10 @@
-const db = require('../database/connection');
-const catchAsync = require('../utils/catchAsync');
-const bcrypt = require('bcrypt');
-const AppError = require('../utils/AppError');
+const db = require("../database/connection");
+const catchAsync = require("../utils/catchAsync");
+const bcrypt = require("bcrypt");
+const AppError = require("../utils/AppError");
 
 const confirmPassword = async (password, id, model) => {
-  const user = await db(model).where('id', id).first();
+  const user = await db(model).where("id", id).first();
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return 0;
   } else return 1;
@@ -12,9 +12,9 @@ const confirmPassword = async (password, id, model) => {
 module.exports = {
   getAll: (model) =>
     catchAsync(async (req, res, next) => {
-      const users = await db(model).select().where('deleted', '!=', 1);
+      const users = await db(model).select().where("deleted", "!=", 1);
       res.status(200).json({
-        status: 'success',
+        status: "success",
         length: users.length,
         users,
       });
@@ -22,44 +22,44 @@ module.exports = {
   getOne: (model) =>
     catchAsync(async (req, res, next) => {
       const { id } = req.params;
-      const user = await db(model).select().where('id', id).first();
+      const user = await db(model).select().where("id", id).first();
       res.status(200).json({
-        status: 'success',
+        status: "success",
         user,
       });
     }),
   deleteAll: (model) =>
     catchAsync(async (req, res, next) => {
       await db(model).del();
-      res.status(204).json({ status: 'success', massage: 'deleted' });
+      res.status(204).json({ status: "success", massage: "deleted" });
     }),
   deleteOne: (model) =>
     catchAsync(async (req, res, next) => {
       const { id } = req.params;
-      const user = await db(model).select().where('id', id).first().del();
-      if (!user) return next(new AppError('This user does not exist', 400));
-      res.status(204).json({ status: 'success', massage: 'deleted' });
+      const user = await db(model).select().where("id", id).first().del();
+      if (!user) return next(new AppError("This user does not exist", 400));
+      res.status(204).json({ status: "success", massage: "deleted" });
     }),
   deactivate: (model) =>
     catchAsync(async (req, res, next) => {
       const { id } = req.user;
       const { password } = req.body;
       if (!confirmPassword(password, id, model))
-        return next(new AppError('Incorrect password', 400));
-      const user = await db('autoshow')
-        .update('deleted', 1)
-        .where('id', req.user.id)
-        .andWhere('deleted', 0);
+        return next(new AppError("Incorrect password", 400));
+      const user = await db("autoshow")
+        .update("deleted", 1)
+        .where("id", req.user.id)
+        .andWhere("deleted", 0);
       if (!user)
         return next(
           new AppError(
-            'This user is already deactivated or does not exist',
+            "This user is already deactivated or does not exist",
             400
           )
         );
       res.status(200).json({
-        status: 'success',
-        message: 'deleted',
+        status: "success",
+        message: "deleted",
         user,
       });
     }),
@@ -68,18 +68,18 @@ module.exports = {
       const { id } = req.user;
       const { password } = req.body;
       if (!confirmPassword(password, id, model))
-        return next(new AppError('Incorrect password', 400));
+        return next(new AppError("Incorrect password", 400));
       const user = await db(model)
-        .where('id', id)
-        .andWhere('deleted', 1)
-        .update('deleted', 0);
+        .where("id", id)
+        .andWhere("deleted", 1)
+        .update("deleted", 0);
       if (!user)
         return next(
-          new AppError('This user is already activated or does not exist', 400)
+          new AppError("This user is already activated or does not exist", 400)
         );
       res.status(200).json({
-        status: 'success',
-        massage: 'activated',
+        status: "success",
+        massage: "activated",
         user,
       });
     }),

@@ -1,7 +1,7 @@
-const db = require('../database/connection');
-const catchAsync = require('../utils/catchAsync');
-const bcrypt = require('bcrypt');
-const AppError = require('../utils/AppError');
+const db = require("../database/connection");
+const catchAsync = require("../utils/catchAsync");
+const bcrypt = require("bcrypt");
+const AppError = require("../utils/AppError");
 // const multer = require('multer');
 // const sharp = require('sharp');
 // const multerStorage = multer.memoryStorage();
@@ -13,20 +13,20 @@ const {
   deleteOne,
   activate,
   deactivate,
-} = require('./handlerFactory');
+} = require("./handlerFactory");
 
 module.exports = {
   // getAll: getAll('autoshow'),
-  getOne: getOne('autoshow'),
-  deleteAll: deleteAll('autoshow'),
-  deleteOne: deleteOne('autoshow'),
-  deactivate: deactivate('autoshow'),
-  activate: activate('autoshow'),
+  getOne: getOne("autoshow"),
+  deleteAll: deleteAll("autoshow"),
+  deleteOne: deleteOne("autoshow"),
+  deactivate: deactivate("autoshow"),
+  activate: activate("autoshow"),
   getAll: catchAsync(async (req, res, next) => {
     // const phoneNum = await knex.raw('');
-    const users = await db('autoshow').select().where('deleted', '!=', 1);
+    const users = await db("autoshow").select().where("deleted", "!=", 1);
     res.status(200).json({
-      status: 'success',
+      status: "success",
       length: users.length,
       users,
     });
@@ -48,10 +48,10 @@ module.exports = {
       created_at: db.fn.now(),
       deleted: 0,
     };
-    await db('autoshow').insert(insertObj);
+    await db("autoshow").insert(insertObj);
     res.status(201).json({
-      status: 'success',
-      message: 'created',
+      status: "success",
+      message: "created",
     });
   }),
 };
