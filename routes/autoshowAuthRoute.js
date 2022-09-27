@@ -7,8 +7,8 @@ const {
   forgotPassword,
   resetPassword,
   updatePassword,
+  protect,
 } = require('../controller/autoshowAuthController');
-const { protect } = require('../controller/autoshowAuthController');
 
 const router = express.Router();
 

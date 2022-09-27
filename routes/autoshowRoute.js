@@ -7,6 +7,10 @@ const {
   getOne,
   deactivate,
   activate,
+  setLocation,
+  setWorkingHours,
+  setWorkingDays,
+  setAbout,
 } = require('../controller/autoshowController');
 const { protect } = require('../controller/autoshowAuthController');
 
@@ -18,4 +22,9 @@ router.post('/create', createOne);
 router.delete('/deleteAll', deleteAll);
 router.patch('/deactivate', protect, deactivate);
 router.patch('/activate', protect, activate);
+router.patch('/setLocation', protect, setLocation);
+router.patch('/setWorkingHours', protect, setWorkingHours);
+router.patch('/setWorkingDays', protect, setWorkingDays);
+router.patch('/setAbout', protect, setAbout);
+
 module.exports = router;
