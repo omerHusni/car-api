@@ -12,11 +12,11 @@ const confirmPassword = async (password, id, model) => {
 module.exports = {
   getAll: (model) =>
     catchAsync(async (req, res, next) => {
-      const users = await db(model).select().where('deleted', '!=', 1);
+      const data = await db(model).select().where('deleted', '!=', 1);
       res.status(200).json({
         status: 'success',
-        length: users.length,
-        users,
+        length: data.length,
+        data,
       });
     }),
   getOne: (model) =>
