@@ -22,10 +22,15 @@ module.exports = {
   getOne: (model) =>
     catchAsync(async (req, res, next) => {
       const { id } = req.params;
-      const user = await db(model).select().where('id', id).first();
+      const data = await db(model)
+        .select()
+        .where('id', id)
+        .andWhere('deleted', '!=', 1)
+        .first();
+      if (!data) return next(new AppError('No data found with that id', 404));
       res.status(200).json({
         status: 'success',
-        user,
+        data,
       });
     }),
   deleteAll: (model) =>

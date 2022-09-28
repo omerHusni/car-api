@@ -1,9 +1,12 @@
 const db = require('../database/connection');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
-const { deleteAll, getAll } = require('../controller/handlerFactory');
+const { deleteAll, getAll, getOne } = require('../controller/handlerFactory');
 
 module.exports = {
+  getAll: getAll('car'),
+  deleteAll: deleteAll('car'),
+  getOne: getOne('car'),
   create: catchAsync(async (req, res, next) => {
     const { body } = req;
     const { id } = req.user;
@@ -38,6 +41,27 @@ module.exports = {
       insertedData: insertObj,
     });
   }),
-  deleteAll: deleteAll('car'),
-  getAll: getAll('car'),
+  soldCar: catchAsync(async (req, res, next) => {
+    const autoshow_id = req.user.id;
+    const car_id = req.params.id;
+    const data = await db('car')
+      .where('autoshow_id', autoshow_id)
+      .andWhere('id', car_id)
+      .update({ available: 0, sold_at: db.fn.now() })
+      .select();
+    if (!data) return next(new AppError('No car found!'));
+    res.status(200).json({ status: 'success', massage: 'car marked as sold' });
+  }),
+  updateCar: catchAsync(async (req, res, next) => {
+    const car_id = req.params.id;
+    const { id } = req.user;
+    const { body } = req;
+    const updateObj = { ...body, updated_at: db.fn.now(), updated_by: id };
+    const data = await db('car')
+      .update(updateObj)
+      .where('id', car_id)
+      .andWhere('autoshow_id', id);
+    if (!data) return next(new AppError('Car not updated! or not found'));
+    res.status(200).json({ status: 'success', massage: 'updated' });
+  }),
 };
