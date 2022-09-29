@@ -64,4 +64,24 @@ module.exports = {
     if (!data) return next(new AppError('Car not updated! or not found'));
     res.status(200).json({ status: 'success', massage: 'updated' });
   }),
+  getPhoneNumber: catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const data = await db('car').select().where('id', id).first();
+    const phoneNumbers = await db('autoshow_phone_num')
+      .select('phone_num')
+      .where('autoshow_id', data.autoshow_id);
+    res.status(200).json({ status: 'success', phoneNumbers });
+  }),
+  deleteCar: catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const data = await db('car')
+      .where('id', id)
+      .andWhere('deleted', '!=', 1)
+      .update({ deleted: 1, updated_at: db.fn.now(), updated_by: req.user.id });
+    if (!data)
+      return next(
+        new AppError(`No car found with that id or it's already deleted`, 404)
+      );
+    res.status(200).json({ status: 'success', massage: 'deleted' });
+  }),
 };

@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const AppError = require('../utils/AppError');
 
 const confirmPassword = async (password, id, model) => {
-  const user = await db(model).where('id', id).first();
+  const user = await db(model).select().where('id', id).first();
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return 0;
   } else return 1;
@@ -51,8 +51,12 @@ module.exports = {
       const { password } = req.body;
       if (!confirmPassword(password, id, model))
         return next(new AppError('Incorrect password', 400));
-      const user = await db('autoshow')
-        .update('deleted', 1)
+      const user = await db(model)
+        .update({
+          deleted: 1,
+          updated_at: db.fn.now(),
+          updated_by: req.user.id,
+        })
         .where('id', req.user.id)
         .andWhere('deleted', 0);
       if (!user)
@@ -77,7 +81,11 @@ module.exports = {
       const user = await db(model)
         .where('id', id)
         .andWhere('deleted', 1)
-        .update('deleted', 0);
+        .update({
+          deleted: 0,
+          updated_at: db.fn.now(),
+          updated_by: req.user.id,
+        });
       if (!user)
         return next(
           new AppError('This user is already activated or does not exist', 400)
