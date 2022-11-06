@@ -1,15 +1,15 @@
 // const sha1 = require('sha1');
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { promisify } = require("util");
-const crypto = require("crypto");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { promisify } = require('util');
+const crypto = require('crypto');
 
-const db = require("../database/connection");
-const AppError = require("../utils/AppError");
-const catchAsync = require("../utils/catchAsync");
-const sendEmail = require("../utils/email");
+const db = require('../database/connection');
+const AppError = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+const sendEmail = require('../utils/email');
 
-const { deactivate, activate } = require("./handlerFactory");
+const { deactivate, activate } = require('./handlerFactory');
 
 const changedPasswordAfter = (JWTTimestamp, passwordChangedAt) => {
   if (passwordChangedAt) {
@@ -22,9 +22,9 @@ const changedPasswordAfter = (JWTTimestamp, passwordChangedAt) => {
 
 const createResetToken = (resetToken) => {
   const passwordResetToken = crypto
-    .createHash("sha256")
+    .createHash('sha256')
     .update(resetToken)
-    .digest("hex");
+    .digest('hex');
 
   return [passwordResetToken];
 };
@@ -43,11 +43,11 @@ const createSendToken = (id, statusCode, res) => {
     ),
     httpOnly: true,
   };
-  if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
-  res.cookie("jwt", token, cookieOptions);
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  res.cookie('jwt', token, cookieOptions);
 
   res.status(statusCode).json({
-    status: "success",
+    status: 'success',
     token,
   });
 };
@@ -62,7 +62,7 @@ module.exports = {
       email: body.email,
       created_at: db.fn.now(),
     };
-    const newUser = await db("autoshow").insert(insertObj);
+    const newUser = await db('autoshow').insert(insertObj);
     createSendToken(newUser, 201, res);
   }),
   login: catchAsync(async (req, res, next) => {
@@ -71,45 +71,46 @@ module.exports = {
       return next(new AppError(`Please provide a username and password`, 400));
     }
 
-    const user = await db("autoshow")
+    const user = await db('autoshow')
       .select()
-      .where("username", username)
+      .where('username', username)
       .first();
-
+    console.log(user);
+    console.log(!(await bcrypt.compare(password, user.password)));
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return next(new AppError(`Username or Password is incorrect`, 400));
     }
     createSendToken(user.id, 200, res);
   }),
   logout: (req, res) => {
-    res.cookie("jwt", "loggedOut", {
+    res.cookie('jwt', 'loggedOut', {
       expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
     });
-    res.status(200).json({ status: "success" });
+    res.status(200).json({ status: 'success' });
   },
   protect: catchAsync(async (req, res, next) => {
     let token;
     if (
       req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
+      req.headers.authorization.startsWith('Bearer')
     ) {
-      token = req.headers.authorization.split(" ")[1];
+      token = req.headers.authorization.split(' ')[1];
     } else if (req.cookies.jwt) {
       token = req.cookies.jwt;
     }
-    if (!token || token === "null" || jwt.verify === "jwt malformed")
+    if (!token || token === 'null' || jwt.verify === 'jwt malformed')
       return next(
         new AppError(`You're not login, please login to access`, 401)
       );
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    const user = await db("autoshow").where("id", decoded.id).first();
+    const user = await db('autoshow').where('id', decoded.id).first();
     if (!user || !user.id) {
       return next(new AppError(`This user does not exist`, 401));
     }
-    const passwordChanged = await db("autoshow")
-      .select("password_changed_at")
-      .where("id", user.id)
+    const passwordChanged = await db('autoshow')
+      .select('password_changed_at')
+      .where('id', user.id)
       .first();
     if (changedPasswordAfter(decoded.iat, passwordChanged.password_changed_at))
       return next(new AppError(`The password is changed. Try again`, 401));
@@ -128,25 +129,25 @@ module.exports = {
       next();
     },
   forgotPassword: catchAsync(async (req, res, next) => {
-    const user = await db("autoshow")
+    const user = await db('autoshow')
       .select()
-      .where("email", req.body.email)
+      .where('email', req.body.email)
       .first();
     if (!user) {
       return next(
         new AppError(`No user found with email ${req.body.email}`, 401)
       );
     }
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetToken = crypto.randomBytes(32).toString('hex');
     const [passwordResetToken] = createResetToken(resetToken);
-    await db("autoshow")
+    await db('autoshow')
       .update({
         password_reset_token: passwordResetToken,
         password_reset_expires: Date.now() + 10 * 60000,
       })
-      .where("id", user.id);
+      .where('id', user.id);
     const resetURL = `${req.protocol}://${req.get(
-      "host"
+      'host'
     )}/api/v1/users/resetpassword/${user.email}/${resetToken}`;
     const message = `Forgot your password ? please submit a patch request to ${resetURL} with your new password.`;
     try {
@@ -156,7 +157,7 @@ module.exports = {
         message,
       });
       res.status(200).json({
-        status: "success",
+        status: 'success',
         message: `token sent to email`,
       });
     } catch (err) {
@@ -171,22 +172,22 @@ module.exports = {
   resetPassword: catchAsync(async (req, res, next) => {
     const password = await bcrypt.hash(req.body.password, 12);
     if (!password) {
-      return next(new AppError("Please provide a password", 400));
+      return next(new AppError('Please provide a password', 400));
     }
     const hashedToken = crypto
-      .createHash("sha256")
+      .createHash('sha256')
       .update(req.params.token)
-      .digest("hex");
-    const user = await db("autoshow")
+      .digest('hex');
+    const user = await db('autoshow')
       .select()
-      .where("password_reset_token", hashedToken)
-      .andWhere("password_reset_expires", ">", Date.now())
+      .where('password_reset_token', hashedToken)
+      .andWhere('password_reset_expires', '>', Date.now())
       .first();
     if (!user) {
-      return next(new AppError("Token is invalid or expired", 400));
+      return next(new AppError('Token is invalid or expired', 400));
     }
-    await db("autoshow")
-      .where("id", user.id)
+    await db('autoshow')
+      .where('id', user.id)
       .update({ password: password, password_changed_at: db.fn.now() });
     createSendToken(user, 200, res);
   }),
@@ -194,7 +195,7 @@ module.exports = {
   updatePassword: catchAsync(async (req, res, next) => {
     let { password, newPassword } = req.body;
     console.log(password, newPassword);
-    const user = await db("autoshow").where("id", req.user.id).first();
+    const user = await db('autoshow').where('id', req.user.id).first();
     if (
       !user ||
       !(await bcrypt.compare(password, user.password)) ||
@@ -206,8 +207,8 @@ module.exports = {
       );
     }
     newPassword = await bcrypt.hash(req.body.password, 12);
-    await db("autoshow")
-      .where("id", user.id)
+    await db('autoshow')
+      .where('id', user.id)
       .update({ password: newPassword, password_changed_at: db.fn.now() });
     createSendToken(user, 200, res);
   }),
