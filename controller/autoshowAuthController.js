@@ -9,7 +9,7 @@ const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const sendEmail = require('../utils/email');
 
-const { deactivate, activate } = require('./handlerFactory');
+// const { deactivate, activate } = require('./handlerFactory');
 
 const changedPasswordAfter = (JWTTimestamp, passwordChangedAt) => {
   if (passwordChangedAt) {
@@ -19,13 +19,11 @@ const changedPasswordAfter = (JWTTimestamp, passwordChangedAt) => {
   // False means not changed
   return false;
 };
-
 const createResetToken = (resetToken) => {
   const passwordResetToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-
   return [passwordResetToken];
 };
 
@@ -36,7 +34,6 @@ const signToken = (id) =>
 
 const createSendToken = (id, statusCode, res) => {
   const token = signToken(id);
-
   const cookieOptions = {
     expiresIn: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -45,7 +42,6 @@ const createSendToken = (id, statusCode, res) => {
   };
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
   res.cookie('jwt', token, cookieOptions);
-
   res.status(statusCode).json({
     status: 'success',
     token,
@@ -70,7 +66,6 @@ module.exports = {
     if (!username || !password) {
       return next(new AppError(`Please provide a username and password`, 400));
     }
-
     const user = await db('autoshow')
       .select()
       .where('username', username)
@@ -127,14 +122,10 @@ module.exports = {
       next();
     },
   forgotPassword: catchAsync(async (req, res, next) => {
-    const user = await db('autoshow')
-      .select()
-      .where('email', req.body.email)
-      .first();
+    const { email } = req.body;
+    const user = await db('autoshow').select().where('email', email).first();
     if (!user) {
-      return next(
-        new AppError(`No user found with email ${req.body.email}`, 401)
-      );
+      return next(new AppError(`No user found with email ${email}`, 400));
     }
     const resetToken = crypto.randomBytes(32).toString('hex');
     const [passwordResetToken] = createResetToken(resetToken);
@@ -191,8 +182,9 @@ module.exports = {
   }),
 
   updatePassword: catchAsync(async (req, res, next) => {
+    const { id } = req.user;
     let { password, newPassword } = req.body;
-    const user = await db('autoshow').where('id', req.user.id).first();
+    const user = await db('autoshow').where('id', id).first();
     if (
       !user ||
       !(await bcrypt.compare(password, user.password)) ||
@@ -200,7 +192,7 @@ module.exports = {
       !(user.password_reset_expires > Date.now())
     ) {
       return next(
-        new AppError(`Password is incorrect or provide a new password`, 400)
+        new AppError(`Password is incorrect or token is expired`, 400)
       );
     }
     newPassword = await bcrypt.hash(req.body.password, 12);
