@@ -75,8 +75,6 @@ module.exports = {
       .select()
       .where('username', username)
       .first();
-    console.log(user);
-    console.log(!(await bcrypt.compare(password, user.password)));
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return next(new AppError(`Username or Password is incorrect`, 400));
     }
@@ -194,7 +192,6 @@ module.exports = {
 
   updatePassword: catchAsync(async (req, res, next) => {
     let { password, newPassword } = req.body;
-    console.log(password, newPassword);
     const user = await db('autoshow').where('id', req.user.id).first();
     if (
       !user ||

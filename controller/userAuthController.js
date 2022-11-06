@@ -229,7 +229,6 @@ module.exports = {
   }),
   deleteMe: catchAsync(async (req, res, next) => {
     await db('user').update('deleted', 1).where('id', req.user.id);
-    console.log(req.user.id);
     res.status(200).json({
       status: 'success',
       message: 'deleted',
