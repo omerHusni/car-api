@@ -125,22 +125,31 @@ module.exports = {
       user,
     });
   }),
-  // userActivity: catchAsync(async (req, res, next) => {
-  //   const { id, username } = req.user;
-  //   const { path } = req._parsedOriginalUrl;
-  //   const { method } = req;
-  //   const logger = `${username}::${path}`;
-  //   console.log(req.method);
-  //   // console.log(logger);
-  //   const insertObj = {
-  //     user_id: id,
-  //     activity: logger,
-  //     method: method,
-  //     created_at: db.fn.now(),
-  //   };
-  //   await db('user_activity_logger').where('user_id', id).insert(insertObj);
-  //   console.log(insertObj);
-  //   console.log(`ff`);
-  //   next();
-  // }),
+  userActivity: catchAsync(async (req, res, next) => {
+    const { id } = req.user;
+    const { path } = req._parsedOriginalUrl;
+    const { method } = req;
+
+    const insertObj = {
+      user_id: id,
+      activity: path,
+      method: method,
+      created_at: db.fn.now(),
+    };
+
+    await db('user_activity_logger').insert(insertObj);
+
+    next();
+  }),
+  getUserActivity: catchAsync(async (req, res, next) => {
+    const { id } = req.query;
+    const data = await db('user_activity_logger')
+      .select()
+      .where('user_id', id)
+      .orderBy('created_at', 'desc');
+    res.status(200).json({
+      status: 'success',
+      data,
+    });
+  }),
 };
